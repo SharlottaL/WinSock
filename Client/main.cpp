@@ -18,6 +18,7 @@ int main()
 {
 	setlocale(LC_ALL, "");
 	cout << "Hello WinSock" << endl;
+	cout << "Клиент запущен" << endl;
 	INT iResult = 0;
 	DWORD dwLastError = 0;
 	WSADATA wsaData;
@@ -35,6 +36,11 @@ int main()
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
+
+	/*string ipAddress;
+	cout << "Enter server IP address (127.0.0.1 for local): ";
+	cin >> ipAddress;
+	cin.ignore();*/
 
 	iResult = getaddrinfo("127.0.0.1", DEFAULT_PORT, &hints, &result);
 	if (iResult != 0)
@@ -64,8 +70,42 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-	CHAR send_buffer[BUFFER_LENGTH] = "Hello Server, I am client";
-	iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
+	
+	cout << "Успешно подключено к серверу!" << endl;
+
+	// Цикл обмена сообщениями
+	CHAR recv_buffer[BUFFER_LENGTH] = {};
+	CHAR send_buffer[BUFFER_LENGTH] = {};
+	do
+	{
+		// Клиент вводит сообщение
+		cout << "Введите сообщение: ";
+		cin.getline(send_buffer, BUFFER_LENGTH);
+
+		// Отправка сообщения на сервер
+		iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
+		if (iResult == SOCKET_ERROR)
+		{
+			dwLastError = WSAGetLastError();
+			cout << "Send failed with error: " << dwLastError << endl;
+			closesocket(connect_socket);
+			freeaddrinfo(result);
+			WSACleanup();
+			return dwLastError;
+		}
+		cout << iResult << " Bytes sent" << endl;
+
+		// Проверка на выход
+		if (strcmp(send_buffer, "exit") == 0 || strcmp(send_buffer, "quit") == 0)
+		{
+			cout << "Завершение работы..." << endl;
+			break;
+		}
+	} while (iResult > 0);
+
+	// Завершение работы
+	
+	/*iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 	if (iResult == SOCKET_ERROR)
 	{
 		dwLastError = WSAGetLastError();
@@ -75,8 +115,8 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-	cout << iResult << " Bytes sent" << endl;
-	CHAR recv_buffer[BUFFER_LENGTH] = {};
+	cout << iResult << " Bytes sent" << endl;*/
+	//CHAR recv_buffer[BUFFER_LENGTH] = {};
 	do
 	{
 		iResult = recv(connect_socket, recv_buffer, BUFFER_LENGTH, 0);
@@ -95,6 +135,7 @@ int main()
 		dwLastError = WSAGetLastError();
 		cout << "Shutdown failed with error: " << dwLastError << endl;
 	}
+
 	closesocket(connect_socket);
 	freeaddrinfo(result);
 	WSACleanup();
