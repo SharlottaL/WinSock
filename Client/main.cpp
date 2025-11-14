@@ -17,8 +17,7 @@ using namespace std;
 int main()
 {
 	setlocale(LC_ALL, "");
-	cout << "Hello WinSock" << endl;
-	cout << "Клиент запущен" << endl;
+    cout << "Hello WinSock" << endl;
 	INT iResult = 0;
 	DWORD dwLastError = 0;
 	WSADATA wsaData;
@@ -36,11 +35,6 @@ int main()
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-
-	/*string ipAddress;
-	cout << "Enter server IP address (127.0.0.1 for local): ";
-	cin >> ipAddress;
-	cin.ignore();*/
 
 	iResult = getaddrinfo("127.0.0.1", DEFAULT_PORT, &hints, &result);
 	if (iResult != 0)
@@ -61,7 +55,7 @@ int main()
 		return dwLastError;
 	}
 	iResult = connect(connect_socket, ptr->ai_addr, (INT)ptr->ai_addrlen);
-	if(iResult == SOCKET_ERROR)
+	if (iResult == SOCKET_ERROR)
 	{
 		dwLastError = WSAGetLastError();
 		cout << "Connection error: " << dwLastError << endl;
@@ -70,19 +64,13 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-	
-	cout << "Успешно подключено к серверу!" << endl;
 
-	// Цикл обмена сообщениями
-	CHAR recv_buffer[BUFFER_LENGTH] = {};
 	CHAR send_buffer[BUFFER_LENGTH] = {};
 	do
 	{
-		// Клиент вводит сообщение
-		cout << "Введите сообщение: ";
+		cout << "Введите сообщение:";
 		cin.getline(send_buffer, BUFFER_LENGTH);
 
-		// Отправка сообщения на сервер
 		iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 		if (iResult == SOCKET_ERROR)
 		{
@@ -93,44 +81,13 @@ int main()
 			WSACleanup();
 			return dwLastError;
 		}
-		cout << iResult << " Bytes sent" << endl;
-
-		// Проверка на выход
 		if (strcmp(send_buffer, "exit") == 0 || strcmp(send_buffer, "quit") == 0)
-		{
-			cout << "Завершение работы..." << endl;
 			break;
-		}
+		cout << iResult << " Bytes sent" << endl;
 	} while (iResult > 0);
-
-	// Завершение работы
 	
-	/*iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
-	if (iResult == SOCKET_ERROR)
-	{
-		dwLastError = WSAGetLastError();
-		cout << "Send failed with error: " << dwLastError << endl;
-		closesocket(connect_socket);
-		freeaddrinfo(result);
-		WSACleanup();
-		return dwLastError;
-	}
-	cout << iResult << " Bytes sent" << endl;*/
-	//CHAR recv_buffer[BUFFER_LENGTH] = {};
-	do
-	{
-		iResult = recv(connect_socket, recv_buffer, BUFFER_LENGTH, 0);
-			if(iResult>0)
-				cout << iResult << " Bytes received, Message:\t" << recv_buffer << ".\n";
-			else 
-				if (iResult == 0)
-					cout << "Connection closed" << endl;
-			else
-					cout << "Receive failed with error: " << WSAGetLastError() << endl;
-	} while (iResult > 0);
-
 	iResult = shutdown(connect_socket, SD_SEND);
-	if(iResult == SOCKET_ERROR)
+	if (iResult == SOCKET_ERROR)
 	{
 		dwLastError = WSAGetLastError();
 		cout << "Shutdown failed with error: " << dwLastError << endl;
@@ -140,5 +97,4 @@ int main()
 	freeaddrinfo(result);
 	WSACleanup();
 	return dwLastError;
-
 }

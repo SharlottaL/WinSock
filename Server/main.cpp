@@ -13,39 +13,10 @@ using namespace std;
 
 #define DEFAULT_PORT "27015"
 #define BUFFER_LENGTH 1460
-const int MAXSTRLEN = 255;
-SOCKET _socket;
 
-//bool SendData(char* buffer)
-//{
-//	/* Отправляем сообщение на указанный сокет */
-//	send(_socket, buffer, strlen(buffer), 0);
-//	return true;
-//}
-//void SendDataMessage()
-//{
-//	// Строка для сообщения пользователя
-//	char message[MAXSTRLEN];
-//	// Без этого метода из потока будет считан
-//	// последний ввод пользователя, выполняем сброс.
-//	cin.ignore();
-//	cout << "Input message: ";
-//	cin.get(message, MAXSTRLEN);
-//	SendData(message);
-//}
-//bool ReceiveData(char* buffer, int size)
-//{
-//
-//		/* Получаем сообщение и сохраняем его в буфере.
-//		Метод является блокирующим! */
-//		int i = recv(_socket, buffer, size, 0);
-//	buffer[i] = '\0';
-//	return true;
-//}
 int main()
 {
 	setlocale(LC_ALL, "");
-	cout << "Сервер запущен" << endl;
 	DWORD dwLastError = 0;
 	INT iResult = 0;
 
@@ -108,7 +79,7 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-	cout << "Сервер ожидает подключения на порту " << DEFAULT_PORT << "..." << endl;
+	
 	SOCKET client_socket = accept(listen_socket, NULL, NULL);
 	if (client_socket == INVALID_SOCKET)
 	{
@@ -119,43 +90,27 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-	cout << "Клиент подключен! Ожидание сообщений..." << endl;
-	CHAR send_buffer[BUFFER_LENGTH] = "Привет, клиент";
-	CHAR recv_buffer[BUFFER_LENGTH] = {};
-	INT iSendResult = 0;
 	
+	CHAR recv_buffer[BUFFER_LENGTH] = {};
 	do
 	{
-		
 		iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
+		
 		if (iResult > 0)
 		{
+			recv_buffer[iResult] = '\0';
 			cout << iResult << " Bytes received, Message: " << recv_buffer << endl;
-			iSendResult = send(client_socket, send_buffer, sizeof(send_buffer), 0);
-			if (iSendResult == SOCKET_ERROR)
-			{
-				dwLastError = WSAGetLastError();
-				cout << "Send failed with error: " << dwLastError << endl;
-				break;
-			}
-			cout << "Byte sent: " << iSendResult << endl;
-			if (strcmp(recv_buffer, "exit") == 0 || strcmp(recv_buffer, "quit") == 0)
-			{
-				cout << "Клиент завершил соединение" << endl;
-				break;
-			}
 		}
 		else
-			if (result == 0)
-				cout << "Connection closing" << endl;
-			else
-			{
-				dwLastError = WSAGetLastError();
-				cout << "Receive failed with error: " << dwLastError << endl;
-				break;
-			}
+			if (iResult == 0) cout << "Connection closing" << endl;
+		else
+		{
+			dwLastError = WSAGetLastError();
+			cout << "Receive failed with error: " << dwLastError << endl;
+			break;
+		}
 	} while (iResult > 0);
-	
+
 	closesocket(client_socket);
 	closesocket(listen_socket);
 	freeaddrinfo(result);
