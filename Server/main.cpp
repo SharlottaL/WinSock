@@ -78,7 +78,7 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
-
+	cout << "Accept client connections.....";
 	SOCKET client_socket = accept(listen_socket, NULL, NULL);
 	if (client_socket == INVALID_SOCKET)
 	{
@@ -90,17 +90,17 @@ int main()
 		return dwLastError;
 	}
 
+	do
+	{
 	CHAR send_buffer[BUFFER_LENGTH] = "Привет, клиент";
 	CHAR recv_buffer[BUFFER_LENGTH] = {};
 	INT iSendResult = 0;
 
-	do
-	{
 		iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
 		if (iResult > 0)
 		{
 			cout << iResult << " Bytes received, Message: " << recv_buffer << endl;
-			iSendResult = send(client_socket, send_buffer, sizeof(send_buffer), 0);
+			iSendResult = send(client_socket, recv_buffer, strlen(recv_buffer), 0);
 			if (iSendResult == SOCKET_ERROR)
 			{
 				dwLastError = WSAGetLastError();
