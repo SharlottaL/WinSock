@@ -98,9 +98,9 @@ int main()
 		SetConsoleCP(1251);
 		cin.getline(send_buffer, BUFFER_LENGTH);
 		SetConsoleCP(866);
-	} while (strcmp(send_buffer, "exit") == 0 && strcmp(send_buffer, "quit") == 0);
+	} while (strstr(send_buffer, "exit") == 0 && strstr(send_buffer, "quit") == 0);
 	//} while (strcmp(send_buffer, "exit") != 0 && strcmp(send_buffer, "quit") != 0);
-
+	send(connect_socket, "quit", 4, 0);
 	iResult = shutdown(connect_socket, SD_SEND);
 	if (iResult == SOCKET_ERROR)
 	{
