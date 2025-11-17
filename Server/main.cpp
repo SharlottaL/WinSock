@@ -11,8 +11,16 @@ using namespace std;
 
 #pragma comment(lib, "WS2_32.lib")
 
-#define DEFAULT_PORT "27015"
+#define DEFAULT_PORT  "27015"
 #define BUFFER_LENGTH 1460
+#define MAX_CLIENTS   3
+#define g_sz_SORRY "Error: Количество подключений превышено"
+INT n = 0;
+SOCKET client_sockets[MAX_CLIENTS] = {};
+DWORD threads_IDs[MAX_CLIENTS] = {};
+HANDLE hThreads[MAX_CLIENTS] = {};
+
+VOID WINAPI HandleClient(SOCKET client_socket);
 
 int main()
 {
@@ -78,23 +86,59 @@ int main()
 		WSACleanup();
 		return dwLastError;
 	}
+	
 	cout << "Accept client connections.....";
-	SOCKET client_socket = accept(listen_socket, NULL, NULL);
-	if (client_socket == INVALID_SOCKET)
-	{
-		dwLastError = WSAGetLastError();
-		cout << "Accept failed with error: " << dwLastError << endl;
-		closesocket(listen_socket);
-		freeaddrinfo(result);
-		WSACleanup();
-		return dwLastError;
-	}
-
 	do
 	{
-	CHAR send_buffer[BUFFER_LENGTH] = "Привет, клиент";
-	CHAR recv_buffer[BUFFER_LENGTH] = {};
-	INT iSendResult = 0;
+		SOCKET client_socket = accept(listen_socket, NULL, NULL);
+		/*if (client_sockets[n] == INVALID_SOCKET)
+		{
+			dwLastError = WSAGetLastError();
+			cout << "Accept failed with error: " << dwLastError << endl;
+			closesocket(listen_socket);
+			freeaddrinfo(result);
+			WSACleanup();
+			return dwLastError;
+			
+		}*/
+		
+		if (n < MAX_CLIENTS)
+		{
+			client_sockets[n] = client_socket;
+			hThreads[n] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)HandleClient, (LPVOID)client_sockets[n], 0, threads_IDs + n);
+			//HandleClient(client_sockets[n]);
+			n++;
+		}
+		else
+		{
+			CHAR recv_buffer[BUFFER_LENGTH] = {};
+			INT iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
+			if (iResult > 0)
+			{
+				cout << "Bytes received: " << iResult << endl;
+				cout << "Message: " << recv_buffer << endl;
+				INT iSendResult = send(client_socket, g_sz_SORRY, strlen(g_sz_SORRY), 0);
+				closesocket(client_socket);
+			}
+		}
+	} while (true);
+	closesocket(listen_socket);
+	freeaddrinfo(result);
+	WSACleanup();
+	return dwLastError;
+}
+
+VOID WINAPI HandleClient(SOCKET client_socket)
+{
+	/*SOCKET* client_socket = (SOCKET*) client_socket_;
+	SOCKET client_socket2 = *client_socket;*/
+	INT iResult = 0;
+	DWORD dwLastError;
+	do
+	{
+		CHAR send_buffer[BUFFER_LENGTH] = "Привет, клиент";
+		CHAR recv_buffer[BUFFER_LENGTH] = {};
+		INT iSendResult = 0;
 
 		iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
 		if (iResult > 0)
@@ -110,7 +154,7 @@ int main()
 			cout << "Byte sent: " << iSendResult << endl;
 		}
 		else
-			if (result == 0)
+			if (iResult == 0)
 				cout << "Connection closing" << endl;
 			else
 			{
@@ -121,10 +165,5 @@ int main()
 
 	} while (iResult > 0);
 	closesocket(client_socket);
-	closesocket(listen_socket);
-	freeaddrinfo(result);
-	WSACleanup();
-	return dwLastError;
 }
-
 
