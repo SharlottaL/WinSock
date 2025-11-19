@@ -1,4 +1,4 @@
-#ifndef WIN32_LEAN_AND_MEAN
+﻿#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN		
 #endif
 
@@ -14,7 +14,7 @@ using namespace std;
 #define DEFAULT_PORT  "27015"
 #define BUFFER_LENGTH 1460
 #define MAX_CLIENTS   3
-#define g_sz_SORRY "Error: ���������� ����������� ���������"
+#define g_sz_SORRY "Error: Количество подключений превышено"
 #define IP_STR_MAX_LENGTH   16
 
 INT n = 0;
@@ -110,6 +110,8 @@ int main()
 			hThreads[n] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)HandleClient, (LPVOID)client_sockets[n], 0, threads_IDs + n);
 			//HandleClient(client_sockets[n]);
 			n++;
+			int svobod_slot = MAX_CLIENTS - n;
+			cout << "Количество активных клиентов: " << n << "\nКоличество свободных слотов:" << svobod_slot << "\n" << endl;
 		}
 		else
 		{
@@ -165,7 +167,7 @@ VOID WINAPI HandleClient(SOCKET client_socket)
 	INT iResult = 0;
 	DWORD dwLastError;
 
-	CHAR send_buffer[BUFFER_LENGTH] = "������, ������";
+	CHAR send_buffer[BUFFER_LENGTH] = "Привет, клиент";
 	CHAR recv_buffer[BUFFER_LENGTH] = {};
 	INT iSendResult = 0;
 	do
@@ -177,12 +179,19 @@ VOID WINAPI HandleClient(SOCKET client_socket)
 		if (iResult > 0)
 		{
 			cout << iResult << " Bytes received from " << address <<":" <<port <<"-" << recv_buffer << endl;
-			iSendResult = send(client_socket, recv_buffer, strlen(recv_buffer), 0);
-			if (iSendResult == SOCKET_ERROR)
+			for (int i = 0; i < n; i++)
 			{
-				dwLastError = WSAGetLastError();
-				cout << "Send failed with error: " << dwLastError << endl;
-				break;
+				if (client_sockets[i] != INVALID_SOCKET && client_sockets[i] != client_socket)
+				{
+					iSendResult = send(client_sockets[i], recv_buffer, strlen(recv_buffer), 0);
+
+					if (iSendResult == SOCKET_ERROR)
+					{
+						dwLastError = WSAGetLastError();
+						cout << "Send failed with error: " << dwLastError << endl;
+						break;
+					}
+				}
 			}
 			cout << "Byte sent: " << iSendResult << endl;
 		}
