@@ -13,7 +13,14 @@ using namespace std;
 
 #define DEFAULT_PORT "27015"
 #define BUFFER_LENGTH 1460
+
+short y_position = 1;
+
 VOID Recive(SOCKET connect_socket);
+VOID InputMessage(CHAR send_buffer[]);
+VOID PrintMessage(CHAR recv_buffer[], INT iResult);
+
+
 int main()
 {
 	setlocale(LC_ALL, "");
@@ -67,20 +74,14 @@ int main()
 	DWORD dwThreadID = 0;
 	HANDLE hRecvThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Recive, (LPVOID)connect_socket, 0, &dwThreadID);
 
-	CHAR send_buffer[BUFFER_LENGTH] = "Hello Server, I am client";
+	CHAR send_buffer[BUFFER_LENGTH] = "Hello, WinSock";
 	do
 	{
-		
+		InputMessage(send_buffer);
+		iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 		///////////////////////////
 		//Recive(connect_socket);
 		////////////////////////////
-		ZeroMemory(send_buffer, BUFFER_LENGTH);
-
-		cout << "¬ведите сообщение: ";
-		SetConsoleCP(1251);
-		cin.getline(send_buffer, BUFFER_LENGTH);
-		SetConsoleCP(866);
-		iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 		if (iResult == SOCKET_ERROR)
 		{
 			dwLastError = WSAGetLastError();
@@ -90,7 +91,7 @@ int main()
 			WSACleanup();
 			return dwLastError;
 		}
-		cout << iResult << " Bytes sent" << endl;
+		//cout <<"\n" << iResult << " Bytes sent" << endl;
 	} while (strstr(send_buffer, "exit") == 0 && strstr(send_buffer, "quit") == 0);
 	CloseHandle(hRecvThread);
 	//} while (strcmp(send_buffer, "exit") != 0 && strcmp(send_buffer, "quit") != 0);
@@ -106,7 +107,37 @@ int main()
 	WSACleanup();
 	return dwLastError;
 }
+VOID InputMessage(CHAR send_buffer[])
+{
+	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	BOOL ok = GetConsoleScreenBufferInfo(hConsole, &csbi);
+	COORD position{0, 25};
+	SetConsoleCursorPosition(hConsole, position);
+	*/
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	
+	SetConsoleCursorPosition(hConsole, { 1, 25 });
+	printf("\x1b[2K");
+	ZeroMemory(send_buffer, BUFFER_LENGTH);
+	cout << "¬ведите сообщение: ";
+	SetConsoleCursorPosition(hConsole, { 20, 25 });
+	SetConsoleCP(1251);
+	cin.getline(send_buffer, BUFFER_LENGTH);
+	SetConsoleCP(866);
+	
+	//SetConsoleCursorPosition(hConsole, {0, 20});
+	//CloseHandle(hConsole);
+}
 
+VOID PrintMessage(CHAR recv_buffer[], INT iResult)
+{
+	recv_buffer[iResult] = '\0';
+	 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleCursorPosition(hConsole, {0, y_position});
+    cout << y_position++ << " " << iResult << " Bytes received, Message: " << recv_buffer << endl;
+    SetConsoleCursorPosition(hConsole, { 20, 25 });
+}
 VOID Recive(SOCKET connect_socket)
 {
 	INT iResult = 0;
@@ -115,7 +146,7 @@ VOID Recive(SOCKET connect_socket)
 		{
 	iResult = recv(connect_socket, recv_buffer, BUFFER_LENGTH, 0);
 	if (iResult > 0)
-		cout << iResult << " Bytes received, Message:\t" << recv_buffer << ".\n";
+		PrintMessage(recv_buffer, iResult);
 	else
 		if (iResult == 0)
 			cout << "Connection closed" << endl;

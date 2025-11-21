@@ -118,8 +118,8 @@ int main()
 			INT iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
 			if (iResult > 0)
 			{
-				cout << "Bytes received: " << iResult << endl;
-				cout << "Message: " << recv_buffer << endl;
+				cout << "\nBytes received: " << iResult << endl;
+				cout << "Message: " << recv_buffer << "\n" << endl;
 				INT iSendResult = send(client_socket, g_sz_SORRY, strlen(g_sz_SORRY), 0);
 				closesocket(client_socket);
 			}
@@ -187,17 +187,17 @@ VOID WINAPI HandleClient(SOCKET client_socket)
 		iResult = recv(client_socket, recv_buffer, BUFFER_LENGTH, 0);
 		if (iResult > 0)
 		{
-			cout << iResult << " Bytes received from " << address <<":" <<port <<"-" << recv_buffer << endl;
+			cout << iResult << " Bytes received from " << address << ":" << port << "-" << recv_buffer << endl;
 			sprintf(send_buffer, "%i Bytes received from %s:%i - %s\n", iResult, address, port, recv_buffer);
 			BroadCast(send_buffer, client_socket);
-			iSendResult = send(client_socket, recv_buffer, strlen(recv_buffer), 0);
+			iSendResult = send(client_socket, send_buffer, strlen(send_buffer), 0);
 			if (iSendResult == SOCKET_ERROR)
 			{
 				dwLastError = WSAGetLastError();
 				cout << "Send failed with error: " << dwLastError << endl;
 				break;
 			}
-			cout << "Byte sent: " << iSendResult << endl;
+			//cout << "\nByte sent: " << iSendResult << endl;
 		}
 		else
 			if (iResult == 0)
